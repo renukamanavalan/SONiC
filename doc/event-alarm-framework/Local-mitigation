@@ -9,7 +9,7 @@ SONiC anomaly deduction & mitigation
 5. Describe every publish data via schema.
 6. Log every published data as a backup source
 
-# Problems to solve. Upon detec
-Today external tools watch for signatures via logs or published counters to detect anomalies. Upon deduction, the external tools record the anomalies and trigger the mitigation process, which in turn trigger required safety checks. If the automated run of safety checks or mitigations would fail, it is directed for human assistance. This process of deduction and internal propagation takes solid latency that runs in minutes for reasons
-  1. Wait for syslogs to come to external repo for signature analysis, which goes in the order of few minutes.
-  2. 
+# Problems to solve. 
+## What we have today
+1. Today SONiC reports events via events channel & syslog.
+2. The external 
