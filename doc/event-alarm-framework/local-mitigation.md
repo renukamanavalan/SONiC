@@ -239,7 +239,7 @@ Table name: LOM_COUNTERS
 4. Service Core/Actions update
    - Build a new container image and push to ACR.
    - Container images are versioned.
-   - Set the new version as golden version in FEATURE table in CONFIG-DB.
+   - Set the new version as golden version in FEATURE table in CONFIG-DB via CONFIG-update via CLI/gNMI.
    - An anomaly is triggered when golden version != running version
    - The bound mitigation action is triggered vis D-BUS.
    - The mitigation action
