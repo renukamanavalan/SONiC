@@ -91,7 +91,9 @@ Detection & mitigations run **locally** within the switch.
 8. The Dev adding/updating a feature, now gets the **ownership** to create & mitigate a new anomaly or update an existing one.</br> 
    In other words now anonmaly detection/mitigation resides with the rightful owner, the switch's Dev/SME.
    
-   
+# A sample use case
+Link flap/CRC error detected and mitigation is to shurdown the link, if safety-checks would pass.
+
 # Overview
 ![image](https://user-images.githubusercontent.com/47282725/205552069-19e7e1d3-5222-4494-af76-7be5f4f1e6cd.png)
 
