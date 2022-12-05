@@ -173,6 +173,7 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
 8. The container adds another service/feature as systemd managed.
 9. The container will use a private dir /usr/share/sonic/LoM as RW. This dir will be mounted only to LoM container, hence exclusive.
 10. The private dir will be used for any runtime update and image upgrade script will carry over for maintianing the updates.
+11. This service is integrated with sonic-buildimage via submodule update.
 
 ## Redis-DB
 ### STATE-DB
@@ -318,4 +319,69 @@ Table name: LOM_COUNTERS
      7. On failure, tag old image as latest and remove new image followed by service restart
 
 
+# LoM service Actions:
+Therea are 3 types of actions as below. Each are independent units of actions bound together via pre-declared/run-time-config.
+1. Anomaly detection
+2. Safety-checks
+3. Mitigations
+
+### Anomaly-detections
+  - These actions run as plugins and their only goal is to detect occurrence of an anomaly.
+  - The code that runs for detection runs forever or may demand periodic invocation.
+  - The code that runs until detection sleeps on signal/event or do a periodic poll on some object, which may be DB-counters/scan a file
+  - Returns to the caller upon successful detection or an internal failure.
+  - Successful detection reports data as per schema.
+  - Nightly tests ensure the data integrity in each OS release.
+  - The engine publishes it via events channel and passes it to subsequently invoked safety-checks and mitigations as part of shared context.
+  - The schema specifies mitigations to run with order specified.
+  - A config update can override this.
+  - RFE: An anomaly can be manually reported via DB.
+    -  This is to enable external services/DRI to trigger repair actions for an anomaly explicitly. The DB entry will be created with JSON object per Anomaly's schema.
+  - Publishing
+    - Anomaly is published upon detection with data as per schema.
+    - An instance of anomaly detection is uniquely identified by a UUID, called instance-id.
+  - Heartbeats:
+    - Anomaly is re-published with same instance ID, but different timestamp.
+    - Status set to in-progress
+  - Completion
+    -  Anomaly is re-published with same instance ID, but different timestamp.
+    -  Status set to *complete*
+    -  Mitigation status code set to 0 for success or appropriate non-zero error code
+    -  Mitigation status string set to human readable description of the mitigation status code.
+ - For external tools
+    - The run of corresponding mitigations may complete / abort.
+    - In either case, the result is published.
+    - The external service that watches for anomaly events could track its local mitigation progress via subsequent published events for same instance-ID.
+    - Watch for heartbeats / completion.
+
+### Mitigation-actions
+    - These are independent units of actions that can be used as mitigation by an anomaly.
+    - An anomaly may use one or more mitigation actions as ordered.
+    - A couple of mitigation actions could run as ordered.
+      - E.g., *config-reload* followed by *Service-restart* could be required as full mitigation.
+    - Like anomalies bind to mitigations, mitigations bind to safety-checks.
+    - The only difference is that for anomalies, mitigations follow its occurrence, whereas for mitigations, the safety-checks precedes the mitigation run.
+    - A mitigation action may require some i/p from any of the preceding actions (anomaly/safety-check/mitigation)
+      - E.g., service-restart is a mitigation action, and it requires the name of the service as i/p.
+      - E.g., config-reload is a mitigation action and it does not need any i/p from the triggering anomaly.
+    - Mitigations that require i/p from an action must refer to corresponding parameter in each action's schema.
+      - Use leafref from mitigation schema to refer to referring schema.
+      - In case of multiple referrers, use union of leafref
+      -  Multiple different anomalies may need service-restart and each anomaly should specify its service name as data.
+      - The schema validation will help ensure the mitigation's requirements are in-place in every referring schema.
+    - Result of every mitigation run is published.
+      - Each run is uniquely identified by an UUID as instanceId.
+    - The published data includes the instance-ID of the corresponding anomaly.
+      - All actions that run for instance of an anomaly, include the instance-id of the anomaly.
+      - This can be used to track all instances of all actions for a single instance of an anomaly.
+    - Each mitigation action is timed by engine. The action could configure its own timeout over the default timeout used by engine.
+
+### Safety checks
+    - These are independent units of actions that can be used as safety-checks by mitigations.
+    - Like mitigation its inputs are made to reference other actions that are expected to precede.
+    - The data published by safety checks could be referred to by other actions.
+    - The scope of the checks could be local or spans neighbor devices in same tier and/or more.
+    - Each safety-check action is timed by the engine. The action could configure its own timeout over the default timeout used by engine.
+    - The result of each safety-action run is published with an UUID that denotes each instance uniquely.
+    - The published data includes the instance-ID of the corresponding anomaly
 
