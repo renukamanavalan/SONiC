@@ -385,3 +385,21 @@ Therea are 3 types of actions as below. Each are independent units of actions bo
   - The result of each safety-action run is published with an UUID that denotes each instance uniquely.
   - The published data includes the instance-ID of the corresponding anomaly
 
+# Schema
+##  Overview:
+1. This defines the action as data.
+2. All related actions are declared under a single YANG schema module.
+3. YANG schema module is versioned.
+4. For each action the following are true  
+   - Action is defined as a YANG schema container.
+   - instanceID - Action has its own instance-id, which is a UUID to globally identify instance of an action.
+   - AnomalyInstanceId is the Instance ID of the associated anomaly which triggered this action.
+   - Type as anomaly or mitigation or safety-check
+
+5. Each action declares its i/p & o/p parameters as attributes.
+6. The i/p attributes are tied to referred schemas via schema reference.
+   - When referring multiple schemas use union
+7. The o/p attributes are the result of the action.
+   - The o/p attributes could be referred to by others.
+8. The mitigation & safety-checks have result-code and result-str.
+9. The published data per action is per this schema.
