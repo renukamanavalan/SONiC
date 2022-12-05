@@ -1,4 +1,4 @@
-SONiC anomaly deduction & mitigation
+Local Mitigation (LoM)
 =============================================
 
 # Goals
@@ -71,4 +71,24 @@ Detection & mitigations run **locally** within the switch.
    - Run some commands periodically to assess switch states
    - ...
   
-3. d
+2. Service correlates events and config to detect anomalies
+3. Service runs required mitigations preceded by safety-checks for each anomaly.
+4. Detection, mitigation & safety check runs are published as events
+   -- While mitigation in progress, publish heartbeats to affirm that mitigation is in progress
+6. The service self validates via nightly tests for all its anomalies and the follow-up actions as safety-checks & mitigations
+7. The service provides external access to internal/built-in detection/mitigation/safety-check actions
+
+## Gains
+1. TTD ~= 0  (Time To Detect)
+2. TTM ~= 0  (Time To Mitigate)
+3. Switch specific - Just handles this HW only 
+4. Evolves wuth OS upgrade -- Nightly ensures integrity by failing for any change needed.
+5. The external tools can use built-in detection/mitigation/safety-check actions when/where the LoM service is not functioning.
+   - This devoids the need for HW and/or OS level abstractions
+6. With no external components involved, not only latency is improved, it improves the reliability too.
+7. The detection/mitigation service is **now distributed**.</br>
+   Instead of tools creating instances to scale across thousands of switches, the work is now being delegated to every switch to do this using its own resources.
+8. The Dev adding/updating a feature, now gets the **ownership** to create & mitigate a new anomaly or update an existing one.</br> 
+   In other words now anonmaly detection/mitigation resides with the rightful owner, the switch's Dev/SME.
+   
+   
