@@ -107,7 +107,8 @@ Detection & mitigations run **locally** within the switch.
 
 ## Redis-DB
 ### STATE-DB
-This holds the current status of actions and their bindings
+This holds the current status of actions and their bindings.</br>
+[Please refer github repo for final YAANG models]
 
 #### ACTIONS-List
     container LOM_ACTIONS {
@@ -136,4 +137,69 @@ This holds the current status of actions and their bindings
 
 
 #### ACTIONS-Bindings
+    container LOM_ACTION_BINDINGS {
+        description "List of bindings";
 
+        list bindings-list {
+            key "ACTION-NAME";
+            
+            leaf ACTION-NAME {
+                type leafref {
+                    path "../../LOM_ACTIONS/ACTION-NAME";
+                }
+                description "Name of the action" of the action as
+                    <yang module name>:<container name>";
+            }   
+            
+            list bindings {
+                key "sequence"
+
+                leaf sequence {
+                    type uint8;
+                    description "Order of running. Lower sequence go before higher";
+                }
+
+                leaf ACTION-NAME {
+                    type leafref {
+                        path "../../LOM_ACTIONS/ACTION-NAME";
+                    }
+                    description "Name of the action" of the action as
+                        <yang module name>:<container name>";
+                }
+            }
+        }
+        
+#### Global switches
+A way to turn off all.
+
+    container LOM_ACTION_GLOBALS {
+        description "global settings"
+
+        leaf disable-anomalies {
+            type boolean;
+            description "If true, it implies all anomaly detections are turned off.
+                This overrides action level enabled switch.";
+        }
+
+        leaf disable-mitigations {
+            type boolean;
+            description "If true, it implies all mitigation actions are turned off.
+                This overrides action level enabled switch.";
+        }   
+    }   
+    
+#### counters
+Table name: LOM_COUNTERS
+
+| COUNTE      | Description                        |
+| ----------- | ---------------------------------- |
+| Detected    | Total count of detected anomalies  |
+| mitigated   | Total count of mitigated anomalies |
+| failed-safety-checks   | Total count of safety-checks failed  |
+| failed-mitigations     | Total count of mitigations failed    |
+| min-TTM                | Lowest time taken to mitigate        |
+| Average-TTM            | Average time taken in last N mitigations |
+| Percent-resolved-within-1m	| <count mitigated in less than 1m>/<total mitigated> |
+| Percent-resolved-within-2m	| <count mitigated in less than 2m>/<total mitigated> |
+| Percent-resolved-within-5m	| <count mitigated in less than 5m>/<total mitigated> |
+| Percent-count-mitigated	<count of mitigated>/<count detected with configured mitigation> |
