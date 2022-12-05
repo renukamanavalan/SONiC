@@ -12,4 +12,63 @@ SONiC anomaly deduction & mitigation
 # Problems to solve. 
 ## What we have today
 1. Today SONiC reports events via events channel & syslog.
-2. The external 
+2. The external tools monitor published events/logs, correlate with additional data to identify occurrence of an anomaly.
+3. The tools reports the anomaly
+4. The tools that watch for anomaly attempts to mitigate, which often requires the tool to run command(s) inside the device.
+5. The amomaly is directed for manual mitigation if the tool would fail to mitigate.
+
+## Problems
+1. Latency</br>
+   - The logs/events takes many hops to reach a storage that can be watched
+   - The tools handles thousands of switches and hence manages finite resources to manage multiple
+   - The tools/components on the path have their own disjoint maintenance windows
+   - Environmental factors</br>
+   All the above leads to solid latency that can run in minutes in average. Even in the best/happy path, it can take many seconds.
+   
+2. Reliability</br>
+   More the entities in the path from switch publishing an event to mitigation, the reliability goes down as it is the sum of reliability of each component in the path. </br>
+   With multiple discrete components shared by multiple different, event the planned maintenance can't be synchronized which can have a say on reliability.
+   
+3. Reaching the device</br>
+   Most of the mitigation actions require to run one or more commands inside the switch.</br>
+   A sample could be `sudo config bgp shutdown neighbor <IP>`</br>
+   This requires tool to get into the device via ssh.</br>
+   If the switch is either not reachable via Mgmt network or has internal issue that blocks user log-in, the auto-mitigation is not possible.
+   This anomaly has to be deferred to manual action.
+   Any manual action can take in the order of hours/days to mitigate.
+
+4. Hardware abstraction
+   A network is likely made of switches from multiple vendors.</br>
+   Each vendor have their own logs/events they publish which external tools use for anonaly detection.</br>
+   Each vendor have their own CLI command for a single action, like BGP shutdown, which the tools use for mitigation.</br>
+   The detection tool has to map to different code/implementation per vendor.
+   The mitigation tool has to use an abstraction layer, which takes in the high level command and translate to appropriate CLI command per vendor.
+   
+5. OS update handling
+   Switch OS from any vendor evolves constantly to add features, deprecate some feature, bug fixes, improvements, ...</br>
+   Some updates could affect the events/logs published out, which could invalidate/fail the external anomaly detection.</br>
+   Some updates may demand different set of commands for a mitigation, which can silently/transparently invalidate the existing mitigation action.</br>
+   
+6. Knowledge sharing</br>
+   A switch may carry new events or deprecate old.</br>
+   If unless this knowledge sharing is made into a strict process, this can leave a big gap between anomaly detection/mitigation FW and switches.
+   
+7. Too bulky
+   When a switch upgrades its OS, it takes years before all switches in the network is upgraded to it. While this train is in motion, new trains could be created.</br>
+   The tool is *required* to handle all.
+   This implies that the tool never upgrades on OS upgrade, but adds one more "else if" clause.
+   As trains takes years, there is no process to revisit the tool to purge handlers for versions which no more exist in Network.
+   
+8. And more ...
+
+## How we solve
+Detection & mitigations run **locally** within the switch.
+1. Define a containerized service that watches for anomalies
+   - Watch locally published events
+   - Watch file system 
+   - Watch DB entities
+   - Watch counters
+   - Run some commands periodically to assess switch states
+   - ...
+  
+3. d
