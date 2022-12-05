@@ -92,6 +92,11 @@ Detection & mitigations run **locally** within the switch.
    In other words now anonmaly detection/mitigation resides with the rightful owner, the switch's Dev/SME.
    
    
+# Overview
+![image](https://user-images.githubusercontent.com/47282725/205552069-19e7e1d3-5222-4494-af76-7be5f4f1e6cd.png)
+
+
+
 # SONiC updates/impacts
 ## LoM Service/container
 1. A new service is added for LoM (Local Mitigation)
