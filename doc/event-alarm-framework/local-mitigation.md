@@ -92,3 +92,48 @@ Detection & mitigations run **locally** within the switch.
    In other words now anonmaly detection/mitigation resides with the rightful owner, the switch's Dev/SME.
    
    
+# SONiC updates/impacts
+## LoM Service/container
+1. A new service is added for LoM (Local Mitigation)
+2. Service is defined as plugin based, where each action (detection/safety-check/mitigation) can be added as plugins.
+3. Plugins are independent entities that are defined via schema
+4. Plugins/actions that depend on other preceding actions put their binding via schema.
+5. Service is data driven, that it binds actions based on config.
+6. All actions that follow an detection is provided a common context that carries data o/p from each preceding action.
+7. A subset/all actions can be enabled/disabled via config.
+8. The container adds another service/feature as systemd managed.
+9. The container will use a private dir /usr/share/sonic/LoM as RW. This dir will be mounted only to LoM container, hence exclusive.
+10. The private dir will be used for any runtime update and image upgrade script will carry over for maintianing the updates.
+
+## Redis-DB
+### STATE-DB
+This holds the current status of actions and their bindings
+
+#### ACTIONS-List
+    container LOM_ACTIONS {
+        description "List of actions";
+
+        list actions-list {
+
+            key "ACTION-NAME";
+
+            leaf ACTION-NAME {
+                type string;
+                description "Fully qualified ame of the action as
+                    <yang module name>:<container name>";
+            }
+
+            leaf action-type {
+                type cmn:action-types  // Marks as anomaly / mitigation / safety-check
+            }
+
+            leaf enabled {
+                type boolean;
+                description "True if enabled";
+            }
+        }
+    }
+
+
+#### ACTIONS-Bindings
+
