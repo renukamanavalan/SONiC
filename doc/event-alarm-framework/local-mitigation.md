@@ -355,33 +355,33 @@ Therea are 3 types of actions as below. Each are independent units of actions bo
     - Watch for heartbeats / completion.
 
 ### Mitigation-actions
-    - These are independent units of actions that can be used as mitigation by an anomaly.
-    - An anomaly may use one or more mitigation actions as ordered.
-    - A couple of mitigation actions could run as ordered.
-      - E.g., *config-reload* followed by *Service-restart* could be required as full mitigation.
-    - Like anomalies bind to mitigations, mitigations bind to safety-checks.
-    - The only difference is that for anomalies, mitigations follow its occurrence, whereas for mitigations, the safety-checks precedes the mitigation run.
-    - A mitigation action may require some i/p from any of the preceding actions (anomaly/safety-check/mitigation)
-      - E.g., service-restart is a mitigation action, and it requires the name of the service as i/p.
-      - E.g., config-reload is a mitigation action and it does not need any i/p from the triggering anomaly.
-    - Mitigations that require i/p from an action must refer to corresponding parameter in each action's schema.
-      - Use leafref from mitigation schema to refer to referring schema.
-      - In case of multiple referrers, use union of leafref
-      -  Multiple different anomalies may need service-restart and each anomaly should specify its service name as data.
-      - The schema validation will help ensure the mitigation's requirements are in-place in every referring schema.
-    - Result of every mitigation run is published.
-      - Each run is uniquely identified by an UUID as instanceId.
-    - The published data includes the instance-ID of the corresponding anomaly.
-      - All actions that run for instance of an anomaly, include the instance-id of the anomaly.
-      - This can be used to track all instances of all actions for a single instance of an anomaly.
-    - Each mitigation action is timed by engine. The action could configure its own timeout over the default timeout used by engine.
+  - These are independent units of actions that can be used as mitigation by an anomaly.
+  - An anomaly may use one or more mitigation actions as ordered.
+  - A couple of mitigation actions could run as ordered.
+    - E.g., *config-reload* followed by *Service-restart* could be required as full mitigation.
+  - Like anomalies bind to mitigations, mitigations bind to safety-checks.
+  - The only difference is that for anomalies, mitigations follow its occurrence, whereas for mitigations, the safety-checks precedes the mitigation run.
+  - A mitigation action may require some i/p from any of the preceding actions (anomaly/safety-check/mitigation)
+    - E.g., service-restart is a mitigation action, and it requires the name of the service as i/p.
+    - E.g., config-reload is a mitigation action and it does not need any i/p from the triggering anomaly.
+  - Mitigations that require i/p from an action must refer to corresponding parameter in each action's schema.
+    - Use leafref from mitigation schema to refer to referring schema.
+    - In case of multiple referrers, use union of leafref
+    -  Multiple different anomalies may need service-restart and each anomaly should specify its service name as data.
+    - The schema validation will help ensure the mitigation's requirements are in-place in every referring schema.
+  - Result of every mitigation run is published.
+    - Each run is uniquely identified by an UUID as instanceId.
+  - The published data includes the instance-ID of the corresponding anomaly.
+    - All actions that run for instance of an anomaly, include the instance-id of the anomaly.
+    - This can be used to track all instances of all actions for a single instance of an anomaly.
+  - Each mitigation action is timed by engine. The action could configure its own timeout over the default timeout used by engine.
 
 ### Safety checks
-    - These are independent units of actions that can be used as safety-checks by mitigations.
-    - Like mitigation its inputs are made to reference other actions that are expected to precede.
-    - The data published by safety checks could be referred to by other actions.
-    - The scope of the checks could be local or spans neighbor devices in same tier and/or more.
-    - Each safety-check action is timed by the engine. The action could configure its own timeout over the default timeout used by engine.
-    - The result of each safety-action run is published with an UUID that denotes each instance uniquely.
-    - The published data includes the instance-ID of the corresponding anomaly
+  - These are independent units of actions that can be used as safety-checks by mitigations.
+  - Like mitigation its inputs are made to reference other actions that are expected to precede.
+  - The data published by safety checks could be referred to by other actions.
+  - The scope of the checks could be local or spans neighbor devices in same tier and/or more.
+  - Each safety-check action is timed by the engine. The action could configure its own timeout over the default timeout used by engine.
+  - The result of each safety-action run is published with an UUID that denotes each instance uniquely.
+  - The published data includes the instance-ID of the corresponding anomaly
 
