@@ -199,7 +199,7 @@ Table name: LOM_COUNTERS
 | failed-mitigations     | Total count of mitigations failed    |
 | min-TTM                | Lowest time taken to mitigate        |
 | Average-TTM            | Average time taken in last N mitigations |
-| Percent-resolved-within-1m	| <count mitigated in less than 1m>/<total mitigated> |
-| Percent-resolved-within-2m	| <count mitigated in less than 2m>/<total mitigated> |
-| Percent-resolved-within-5m	| <count mitigated in less than 5m>/<total mitigated> |
-| Percent-count-mitigated	<count of mitigated>/<count detected with configured mitigation> |
+| Percent-resolved-within-1m	| < count mitigated in less than 1m >/< total mitigated > |
+| Percent-resolved-within-2m	| < count mitigated in less than 2m >/< total mitigated > |
+| Percent-resolved-within-5m	| < count mitigated in less than 5m >/< total mitigated > |
+| Percent-count-mitigated	< count of mitigated >/< count detected with configured mitigation > |
