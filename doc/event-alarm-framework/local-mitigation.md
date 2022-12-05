@@ -2,10 +2,10 @@ Local Mitigation (LoM)
 =============================================
 
 # Goals
-1. Ability to detect anomalies at runtime.
-2. Ability to mitigate the deducted anomalies
+1. Ability to detect anomalies at runtime locally within switch.
+2. Ability to mitigate the deducted anomalies at the point of detection from within the switch.
 3. Ability to run required safety checks before mitigation
-4. Publish deducted anomalies and results of mitigations via gNMI upon SUBSCRIBE.
+4. Publish detected anomalies and results of mitigations via gNMI upon SUBSCRIBE.
 5. Describe every publish data via schema.
 6. Log every published data as a backup source
 
@@ -294,19 +294,21 @@ Table name: LOM_COUNTERS
 2. Config update:
    - Possible via gNMI channel via telemetry
    - New client with path will be added to handle it.
-   - Updated config is maintained in host provided path.
+   - Updated config is maintained in host provided path as files.
    - Image upgrade script will carry over upon image update.
 3. Actions update:
    - Possible via file copy into the switch
    - New plugin files may be copied to the path mapped to container.
    - A local monitor will reload the new file.
+   - Image upgrade script will carry over upon image update.
+   - Plugin files are versioned and the new image will load the latest, which could be from carried over file or built-in.
 4. Service Core/Actions update
    - Build a new container image and push to ACR.
    - Container images are versioned.
    - Set the new version as golden version in FEATURE table in CONFIG-DB via CONFIG-update via CLI/gNMI.
    - An anomaly is triggered when golden version != running version
-   - The bound mitigation action is triggered vis D-BUS.
-   - The mitigation action
+   - The mitigation action bound to this anomaly is triggered which executes script via D-BUS.
+   - The mitigation action script via D-Bus does upgrade as follows.
      1. downloads the new docker image
      2. Load the new docker image
      3. Tag it as the latest.
