@@ -191,15 +191,13 @@ A way to turn off all.
 #### counters
 Table name: LOM_COUNTERS
 
-| COUNTE      | Description                        |
+| COUNTER      | Description                        |
 | ----------- | ---------------------------------- |
 | Detected    | Total count of detected anomalies  |
 | mitigated   | Total count of mitigated anomalies |
 | failed-safety-checks   | Total count of safety-checks failed  |
 | failed-mitigations     | Total count of mitigations failed    |
-| min-TTM                | Lowest time taken to mitigate        |
-| Average-TTM            | Average time taken in last N mitigations |
 | Percent-resolved-within-1m	| < count mitigated in less than 1m >/< total mitigated > |
 | Percent-resolved-within-2m	| < count mitigated in less than 2m >/< total mitigated > |
 | Percent-resolved-within-5m	| < count mitigated in less than 5m >/< total mitigated > |
-| Percent-count-mitigated	< count of mitigated >/< count detected with configured mitigation > |
+| Percent-count-mitigated	| < count of mitigated >/< count detected with configured mitigation > |
