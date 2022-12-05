@@ -94,7 +94,8 @@ Detection & mitigations run **locally** within the switch.
 # A sample use case
 DHCP relay discard detected and mitigation is to restart the DHCP service, if safety-check(s) would pass.
 
-	//Anomaly published
+```
+//Anomaly published
 {
     "anomalies-dhcp-relay:dhcp-relay-discard": {
         "timestamp": "2022-11-01T17:48:02.35189Z",
@@ -151,6 +152,7 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
         "result-str": "Mitigation for dhcp-relay service restart succeeded"
     }
 }
+```
 
 
 
