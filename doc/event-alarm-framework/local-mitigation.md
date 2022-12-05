@@ -205,4 +205,51 @@ Table name: LOM_COUNTERS
 | Percent-resolved-within-1m	| < count mitigated in less than 1m >/< total mitigated > |
 | Percent-resolved-within-2m	| < count mitigated in less than 2m >/< total mitigated > |
 | Percent-resolved-within-5m	| < count mitigated in less than 5m >/< total mitigated > |
-| Percent-count-mitigated	| < count of mitigated >/< count detected with configured mitigation > |
+| Percent-count-mitigated	| < count of mitigated >/< count detected with mitigation configured as enabled > |
+
+## DBUS usage
+1. Mitigations that *require* commands running in the host scope are executed via D-BUS
+2. Mitigation scripts that are to run via D-Bus are maintained in a dir that is exclusive to LoM service.
+3. SONiC-host-service enabled to register scripts from this dir.
+4. A mitigation action will invoke required script.
+5. Each invocation is protected by a instant key, which is provided to script run time via file and passed in as arg by the caller. This helps protect from inadvertent use by anyone else.
+
+## gNMI commands
+1. Any update to the service, could be done via gNMI commands
+2. Possible updates are
+   - Ability to manipulate global switches
+   - Ability to manipulate the enable flag of individual actions
+   - Ability to manipulate the action bindings.
+3. Refer GitHub Repo README for commands syntax
+
+## Service Update
+1. Service update can be divided as 3 parts.
+   1. Config update as enable/disable actions and/or global switches and/or bindings
+   2. Add/update plugins for actions.
+   3. Service core update.
+2. Config update:
+   - Possible via gNMI channel via telemetry
+   - New client with path will be added to handle it.
+   - Updated config is maintained in host provided path.
+   - Image upgrade script will carry over upon image update.
+3. Actions update:
+   - Possible via file copy into the switch
+   - New plugin files may be copied to the path mapped to container.
+   - A local monitor will reload the new file.
+4. Service Core/Actions update
+   - Build a new container image and push to ACR.
+   - Container images are versioned.
+   - Set the new version as golden version in FEATURE table in CONFIG-DB.
+   - An anomaly is triggered when golden version != running version
+   - The bound mitigation action is triggered vis D-BUS.
+   - The mitigation action
+     1. downloads the new docker image
+     2. Load the new docker image
+     3. Tag it as the latest.
+     4. Restart the LOM service
+     5. Run post-checks.
+     6. On success, remove old image.
+     7. On failure, tag old image as latest and remove new image followed by service restart
+
+
+
