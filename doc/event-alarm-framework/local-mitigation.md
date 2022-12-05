@@ -92,7 +92,67 @@ Detection & mitigations run **locally** within the switch.
    In other words now anonmaly detection/mitigation resides with the rightful owner, the switch's Dev/SME.
    
 # A sample use case
-Link flap/CRC error detected and mitigation is to shurdown the link, if safety-checks would pass.
+DHCP relay discard detected and mitigation is to restart the DHCP service, if safety-check(s) would pass.
+
+	//Anomaly published
+{
+    "anomalies-dhcp-relay:dhcp-relay-discard": {
+        "timestamp": "2022-11-01T17:48:02.35189Z",
+        "instance-id": "062445d7-87a0-4600-b482-1921053d103d",
+        "anomaly-instance-id": "062445d7-87a0-4600-b482-1921053d103d",
+        "anomaly-key": "Ethernet0",
+        "ifname": "Ethernet0",
+        "service-name": "dhcp-relay",
+        "action-type": "anomaly",
+        "mitigation-state": "init"
+    }
+}
+
+// heartbeat for this anomaly which is under processing for local mitigation
+// Duplicate of the above except for timestamp & mitigation-state
+// Two heartbeats for an anomaly instance will only differ by timestamp.
+{
+    "anomalies-dhcp-relay:dhcp-relay-discard": {
+        "timestamp": "2022-11-01T17:50:02.35189Z",
+        "instance-id": "062445d7-87a0-4600-b482-1921053d103d",
+        "anomaly-instance-id": "062445d7-87a0-4600-b482-1921053d103d",
+        "anomaly-key": "Ethernet0",
+        "ifname": "Ethernet0",
+        "service-name": "dhcp-relay",
+        "action-type": "anomaly",
+        "mitigation-state": "in-progress"
+    }
+}
+
+// Safety-check that completed for this anomaly
+{
+    "safetychecks-service-restart:service-restart": {
+        "timestamp": "2022-11-01T17:51:02.35189Z",
+        "instance-id": "c8156f6c-b220-4cd0-bc0b-b803aee3217d",
+        "anomaly-instance-id": "062445d7-87a0-4600-b482-1921053d103d",
+        "anomaly-key": "Ethernet0",
+        "service-name": "dhcp-relay",
+        "action-type": "safety-check",
+        "result-code": 0,
+        "result-str": "Safety-check for dhcp-relay service restart succeeded"
+    }
+}
+
+// Mitigation that is completed for this anomaly
+{
+    "mitigations-service-restart:service-restart": {
+        "timestamp": "2022-11-01T17:51:52.35189Z",
+        "instance-id": "01acf729-f03e-40cc-8b9e-cfff07b43ab6",
+        "anomaly-instance-id": "062445d7-87a0-4600-b482-1921053d103d",
+        "anomaly-key": "Ethernet0",
+        "service-name": "dhcp-relay",
+        "action-type": "mitigation",
+        "result-code": 0,
+        "result-str": "Mitigation for dhcp-relay service restart succeeded"
+    }
+}
+
+
 
 # Overview
 ![image](https://user-images.githubusercontent.com/47282725/205552069-19e7e1d3-5222-4494-af76-7be5f4f1e6cd.png)
