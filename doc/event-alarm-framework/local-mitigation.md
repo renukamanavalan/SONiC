@@ -176,8 +176,13 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
 11. This service is integrated with sonic-buildimage via submodule update.
 
 ## Redis-DB
-### STATE-DB
-This holds the current status of actions and their bindings.</br>
+### CONFIG/STATE-DB
+- The service comes with pre-built configuration. 
+- This can be tweaked via CONFIG-DB. The CONFIG-DB is used only for incremental updates
+- The current running config is written into STATE-DB. This will be built-in config that is tweaked from incremental updates. Hence the final running/in-use config.
+- The current config is also saved into a file in host mounted dir, which will be taken over during image upgrade. This way any updates gets carried over to the new 
+- The CLI commands will be provided to config/show.
+mage.
 [Please refer github repo for final YAANG models]
 
 #### ACTIONS-List
@@ -198,6 +203,13 @@ This holds the current status of actions and their bindings.</br>
                 type cmn:action-types  // Marks as anomaly / mitigation / safety-check
             }
 
+            leaf action-config {
+                type string
+                description "Config knobs are custom to Action and hence configured as JSON string.
+                  Each action that needs some config defines the same in schema.
+                  The writer / reader honors the schema.
+                  The write will fail, if it doesn't abide by schema.";
+            }
             leaf enabled {
                 type boolean;
                 description "True if enabled";
@@ -239,8 +251,11 @@ This holds the current status of actions and their bindings.</br>
             }
         }
         
-#### Global switches
-A way to turn off all.
+#### Global/Service level config
+- As above the service comes with the config pre-defined as built-in.
+- The CONFIG-DB could be used to tweak the same.
+- The STATE-DB will reflect the final values in use.
+- The CLI commands will be provided to config/show.
 
     container LOM_ACTION_GLOBALS {
         description "global settings"
@@ -255,7 +270,17 @@ A way to turn off all.
             type boolean;
             description "If true, it implies all mitigation actions are turned off.
                 This overrides action level enabled switch.";
-        }   
+        }
+        
+        leaf min-recur-duration {
+         type uint8;
+         default 0;
+         description "Minimum duration between two reports for the same anomaly.
+            An anomaly, when local mitigation not possible, will take some solid time
+            before auto/manual fix is done. During this time, when the anomaly stays
+            active, we need periodic alert and this fixes the duration between two
+            reports.";
+        }
     }   
     
 #### counters
@@ -280,12 +305,13 @@ Table name: LOM_COUNTERS
 5. Each invocation is protected by a instant key, which is provided to script run time via file and passed in as arg by the caller. This helps protect from inadvertent use by anyone else.
 
 ## gNMI commands
-1. Any update to the service, could be done via gNMI commands
-2. Possible updates are
+1. 
+2. Any update to the service, could be done via gNMI commands
+3. Possible updates are
    - Ability to manipulate global switches
    - Ability to manipulate the enable flag of individual actions
    - Ability to manipulate the action bindings.
-3. Refer GitHub Repo README for commands syntax
+4. Refer GitHub Repo README for commands syntax
 
 ## Service Update
 1. Service update can be divided as 3 parts.
