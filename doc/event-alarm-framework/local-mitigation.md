@@ -156,7 +156,7 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
 
 
 # Requirements
-## Action defintions
+## Action definitions
 1. Define an action via YANG schema
 2. The definition includes
    - Type of action as detection/safety-check/mitigation
@@ -178,16 +178,30 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
    - Result of the run will be published/logged/cached as above with flag indicating manual invoke.
    - The request is always placed with an max lifetime in seconds, explicitly stated.
    
-## Action control
+## Actions control
 1. Actions can be disabled via global or action-specific switch
 2. Dry run of actions are possible with mimic turned on. Here LoM will not make any state change to switch's control/data plane.
 3. Service is controlled via FEATURE flag
 
-## Plugin-model
-1. Internally LoM service ada
-1. Via conventionsl OS upgrade
+## LoM service
+1. Runs all the anomaly actions concurrently or invoked periodically as per requirements of the action.
+2. Runs sequence of bound safety-checks & mitigations per running config.
+3. Supports plugin model for action implementation.
+4. Supports multiple languages as Python, Go & C/C++ for action plugin implementation.
+5. Runs a basic engine/action model where back engine runs as separate process that manages external processes that run the plugins.
+6. I/F between Engine & Plugin processes are defined via C lib, which can be invoked from supported languages *directly*, devoding the need for SWIG abstraction.
+7. A plugin process may manage multiple actions.
+8. 
+9. Runs only one mitigation sequence at any one time.
+10. Anomaly detections go stale if not acted upon set time limit.
+11. Ensures every action is invoked with list of outputs from preceding actions in the chain.
+12. Comes with built-in config for all needed.
+13. Service is self sufficient to run with no external configuration.
+14. Service honors all configuration settings.
+15. Internally LoM service ada
+16. Via conventionsl OS upgrade
    - OS upgrade tweaked to carry any config update done in current image.
-2. Actions code update is feasible via plugin-actions file update to container's shared host folder.
+17. Actions code update is feasible via plugin-actions file update to container's shared host folder.
    - Actions are executed via plugin-action-c
 # Overview
 ![image](https://user-images.githubusercontent.com/47282725/205552069-19e7e1d3-5222-4494-af76-7be5f4f1e6cd.png)
