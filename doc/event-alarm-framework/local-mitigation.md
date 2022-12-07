@@ -305,35 +305,32 @@ Table name: LOM_COUNTERS
 5. Each invocation is protected by a instant key, which is provided to script run time via file and passed in as arg by the caller. This helps protect from inadvertent use by anyone else.
 
 ## gNMI commands
-1. 
-2. Any update to the service, could be done via gNMI commands
-3. Possible updates are
-   - Ability to manipulate global switches
-   - Ability to manipulate the enable flag of individual actions
-   - Ability to manipulate the action bindings.
-4. Refer GitHub Repo README for commands syntax
+1. The existing gNMI command to view events could be used to view all published actions.
+2. The new gNMI commands under development for config update can be transparently used for any CONFIG-DB updates.
+3. The current gNMI commands to view STATE-DB gets transparently extended to the STATE-DB additions.
+4. In short this project does not introduce any new gNMI commands.
 
 ## Service Update
 1. Service update can be divided as 3 parts.
-   1. Config update as enable/disable actions and/or global switches and/or bindings
+   1. Config update of actions, binding and global changes/tweaks.
    2. Add/update plugins for actions.
    3. Service core update.
+   
 2. Config update:
-   - Possible via gNMI channel via telemetry
-   - New client with path will be added to handle it.
-   - Updated config is maintained in host provided path as files.
-   - Image upgrade script will carry over upon image update.
-3. Actions update:
+   - Possible via gNMI channel being added for any configuration update.
+   
+3. Plugins code update:
    - Possible via file copy into the switch
    - New plugin files may be copied to the path mapped to container.
    - A local monitor will reload the new file.
    - Image upgrade script will carry over upon image update.
    - Plugin files are versioned and the new image will load the latest, which could be from carried over file or built-in.
-4. Service Core/Actions update
+   
+4. Service update
    - Build a new container image and push to ACR.
    - Container images are versioned.
    - Set the new version as golden version in FEATURE table in CONFIG-DB via CONFIG-update via CLI/gNMI.
-   - An anomaly is triggered when golden version != running version
+   - A built-in anomaly is triggered when golden version != running version
    - The mitigation action bound to this anomaly is triggered which executes script via D-BUS.
    - The mitigation action script via D-Bus does upgrade as follows.
      1. downloads the new docker image
@@ -413,7 +410,7 @@ Therea are 3 types of actions as below. Each are independent units of actions bo
 
 # Schema
 ##  Overview:
-1. This defines the action as data.
+1. This defines the action as data and its config
 2. All related actions are declared under a single YANG schema module.
 3. YANG schema module is versioned.
 4. For each action the following are true  
