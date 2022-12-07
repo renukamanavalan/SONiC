@@ -3,7 +3,7 @@ Local Mitigation (LoM)
 
 # Goals
 1. Ability to detect anomalies at runtime locally within switch.
-2. Ability to mitigate the deducted anomalies at the point of detection from within the switch.
+2. Ability to mitigate the detected anomalies at the point of detection from within the switch.
 3. Ability to run required safety checks before mitigation
 4. Publish detected anomalies and results of mitigations via gNMI upon SUBSCRIBE.
 5. Describe every publish data via schema.
