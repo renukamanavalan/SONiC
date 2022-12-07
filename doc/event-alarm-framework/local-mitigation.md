@@ -162,8 +162,33 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
    - Type of action as detection/safety-check/mitigation
    - Input & Output parameters associated with the action
    - The i/p parameters sets its source as configuration or o/p parameters from other actions
-   - The ci
+   - The o/p parameters from other actions are expressed via leafref.
+   - The configurable i/p parameters are defaulted
+   - The definition also specifies configurable entities that are common across all actions
 
+## Actions visibility
+1. Every completion of a run of an action reflects as follows
+   - Data is published via events channel
+   - Data is logged via syslog with specific prefix.
+   - last N actions' o/p are cached in STATE-DB for anyone to query/watch.
+  
+2. Any action can be explicitly requested via CONFIG-DB
+   - The request can be placed with all data and a time limit.
+   - A request will be acted upon by LoM Only once.
+   - Result of the run will be published/logged/cached as above with flag indicating manual invoke.
+   - The request is always placed with an max lifetime in seconds, explicitly stated.
+   
+## Action control
+1. Actions can be disabled via global or action-specific switch
+2. Dry run of actions are possible with mimic turned on. Here LoM will not make any state change to switch's control/data plane.
+3. Service is controlled via FEATURE flag
+
+## Plugin-model
+1. Internally LoM service ada
+1. Via conventionsl OS upgrade
+   - OS upgrade tweaked to carry any config update done in current image.
+2. Actions code update is feasible via plugin-actions file update to container's shared host folder.
+   - Actions are executed via plugin-action-c
 # Overview
 ![image](https://user-images.githubusercontent.com/47282725/205552069-19e7e1d3-5222-4494-af76-7be5f4f1e6cd.png)
 
@@ -187,11 +212,15 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
 ### CONFIG/STATE-DB
 - The service comes with pre-built configuration. 
 - This can be tweaked via CONFIG-DB. The CONFIG-DB is used only for incremental updates
-- The current running config is written into STATE-DB. This will be built-in config that is tweaked from incremental updates. Hence the final running/in-use config.
-- The current config is also saved into a file in host mounted dir, which will be taken over during image upgrade. This way any updates gets carried over to the new 
+  - The schema denotes configurable parameters explicitly
+- The current running config is written into STATE-DB. This will be the final running config which is built-in config that is tweaked from incremental updates. Hence the final running/in-use config.
+- The current config is also saved into a file in host mounted dir, which will be taken over during image upgrade. This way any updates gets carried over to the new image.
 - The CLI commands will be provided to config/show.
-mage.
-[Please refer github repo for final YAANG models]
+- Explicit action invocation can be requested via CONFIG-DB with an expiry time.
+  - A generic object to invoke any action with required inputs specified with time point of expiry
+  - This can be used by DRIs/tools to tap on Switch's ability to run a mitigation or safety-check or to report an anomally manually to trigger the chain of actions per configuration.
+
+[Please refer github repo for final YANG models]
 
 #### ACTIONS-List
     container LOM_ACTIONS {
@@ -220,9 +249,21 @@ mage.
                   The writer honors the schema via the common validation process
                   which is applied to any CONFIG-DB update.";
             }
-            leaf enabled {
+            leaf disable {
                 type boolean;
-                description "True if enabled";
+                default False;
+                description "Disable is set as configurable & base-entity in schema.
+                     Hence not part of action-config which holds custom entities per
+                     action.";
+            }
+            leaf mimic {
+                type boolean;
+                default False;
+                description "Mimic is set as configurable & base-entity in schema.
+                     Hence not part of action-config which holds custom entities per
+                     action. 
+                     True - Runs the action, data is published but with return code
+                     indicating mimicked.";
             }
         }
     }
@@ -281,20 +322,35 @@ mage.
         leaf disable-mitigations {
             type boolean;
             description "If true, it implies all mitigation actions are turned off.
-                This overrides action level enabled switch.";
+                This overrides action level enabled switch, when True.";
         }
         
+        leaf mimic-mitigations {
+            type boolean;
+            description "If true, it implies all mitigation actions are mimicked.
+                This overrides action level enabled switch, when True.";
+        }
         leaf min-recur-duration {
-         type uint8;
-         default 0;
-         description "Minimum duration between two reports for the same anomaly.
-            An anomaly, when local mitigation not possible, will take some solid time
-            before auto/manual fix is done. During this time, when the anomaly stays
-            active, we need periodic alert and this fixes the duration between two
-            reports.";
+            type uint8;
+            default 0;
+            description "Minimum duration between two reports for the same anomaly.
+                An anomaly, when local mitigation not possible, will take some solid time
+                before auto/manual fix is done. During this time, when the anomaly stays
+                active, we need periodic alert and this fixes the duration between two
+                reports.";
         }
     }   
-    
+
+#### ACTIONS-Cache
+Caches o/p from last N actions 
+
+< TODO >
+
+#### ACTIONS-Request
+Way to request explicit run of an action or report an anomally manually.
+
+< TODO >
+
 #### counters
 Table name: LOM_COUNTERS
 
