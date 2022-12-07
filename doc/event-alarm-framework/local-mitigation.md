@@ -205,10 +205,12 @@ mage.
 
             leaf action-config {
                 type string
-                description "Config knobs are custom to Action and hence configured as JSON string.
-                  Each action that needs some config defines the same in schema.
-                  The writer / reader honors the schema.
-                  The write will fail, if it doesn't abide by schema.";
+                description "
+                  Config knobs are custom to Action and hence configured as JSON string.
+                  Each action that needs some config defines the same in its schema.
+                  The configurable fields are marked with "config true;"
+                  The writer honors the schema via the common validation process
+                  which is applied to any CONFIG-DB update.";
             }
             leaf enabled {
                 type boolean;
@@ -224,6 +226,7 @@ mage.
 
         list bindings-list {
             key "ACTION-NAME";
+            config true;
             
             leaf ACTION-NAME {
                 type leafref {
@@ -258,8 +261,9 @@ mage.
 - The CLI commands will be provided to config/show.
 
     container LOM_ACTION_GLOBALS {
-        description "global settings"
-
+        description "global settings";
+        config true;
+        
         leaf disable-anomalies {
             type boolean;
             description "If true, it implies all anomaly detections are turned off.
@@ -340,6 +344,8 @@ Table name: LOM_COUNTERS
      5. Run post-checks.
      6. On success, remove old image.
      7. On failure, tag old image as latest and remove new image followed by service restart
+   - NOTE: Systemd is configured with 1 min timeout so as to allow any on going mitigation to complete before exiting for a stop/restart.
+
 
 
 # LoM service Actions:
@@ -410,7 +416,7 @@ Therea are 3 types of actions as below. Each are independent units of actions bo
 
 # Schema
 ##  Overview:
-1. This defines the action as data and its config
+1. This defines the action as data with configurable entities explicitly marked (*config true;*)
 2. All related actions are declared under a single YANG schema module.
 3. YANG schema module is versioned.
 4. For each action the following are true  
