@@ -155,6 +155,14 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
 ```
 
 
+# Requirements
+## Action defintions
+1. Define an action via YANG schema
+2. The definition includes
+   - Type of action as detection/safety-check/mitigation
+   - Input & Output parameters associated with the action
+   - The i/p parameters sets its source as configuration or o/p parameters from other actions
+   - The ci
 
 # Overview
 ![image](https://user-images.githubusercontent.com/47282725/205552069-19e7e1d3-5222-4494-af76-7be5f4f1e6cd.png)
