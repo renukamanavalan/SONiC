@@ -622,3 +622,8 @@ Therea are 3 types of actions as below. Each are independent units of actions bo
   - Whenever a tool identifies an anomaly and attempt to mitigate, can query the switch cache to assess any actions by LoM.
   - A tool that attempts to do any switch update is expected to disable all actions/mitigations to pause LoM while it is repairing/updating the switch.
 
+# TESTS
+  - Each action is covred by unit tests & nightly tests
+  - Nightly tests will validate the data against schema
+  - All config tweaks & state-DB updates are tested via nightly tests.
+  - Events are simulated or mocked as needed.
