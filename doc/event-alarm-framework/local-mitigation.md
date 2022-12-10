@@ -152,6 +152,21 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
         "result-str": "Mitigation for dhcp-relay service restart succeeded"
     }
 }
+
+{
+    "anomalies-dhcp-relay:dhcp-relay-discard": {
+        "timestamp": "2022-11-01T17:48:02.35189Z",
+        "instance-id": "062445d7-87a0-4600-b482-1921053d103d",
+        "anomaly-instance-id": "062445d7-87a0-4600-b482-1921053d103d",
+        "anomaly-key": "Ethernet0",
+        "ifname": "Ethernet0",
+        "service-name": "dhcp-relay",
+        "action-type": "anomaly",
+        "mitigation-state": "complete",
+        "result-code": 0,
+        "result-str": "Mitigation for dhcp-relay service restart succeeded"
+    }
+}
 ```
 
 
@@ -174,6 +189,7 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
   
 2. Any action can be explicitly requested via CONFIG-DB
    - The request can be placed with all data and a time limit.
+   - Only one action can be requested at a time.
    - A request will be acted upon by LoM Only once.
    - Result of the run will be published/logged/cached as above with flag indicating manual invoke.
    - The request is always placed with an max lifetime in seconds, explicitly stated.
@@ -191,18 +207,15 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
 5. Runs a basic engine/action model where back engine runs as separate process that manages external processes that run the plugins.
 6. I/F between Engine & Plugin processes are defined via C lib, which can be invoked from supported languages *directly*, devoding the need for SWIG abstraction.
 7. A plugin process may manage multiple actions.
-8. 
-9. Runs only one mitigation sequence at any one time.
-10. Anomaly detections go stale if not acted upon set time limit.
-11. Ensures every action is invoked with list of outputs from preceding actions in the chain.
-12. Comes with built-in config for all needed.
-13. Service is self sufficient to run with no external configuration.
-14. Service honors all configuration settings.
-15. Internally LoM service ada
-16. Via conventionsl OS upgrade
-   - OS upgrade tweaked to carry any config update done in current image.
-17. Actions code update is feasible via plugin-actions file update to container's shared host folder.
-   - Actions are executed via plugin-action-c
+8. Runs only one mitigation sequence at any one time.
+9. Anomaly detections go stale if not acted upon set time limit and get aborted.
+10. Ensures every action is invoked with list of outputs from preceding actions in the chain.
+11. Comes with built-in config for all needed. Hence self sufficient to run with no external configuration.
+12. Service honors all configuration settings.
+13. Running config = Built-in config + config updates
+14. The running config is carried over upon image upgrade.
+15. A CLI for running config is extendeded to LoM service.
+
 # Overview
 ![image](https://user-images.githubusercontent.com/47282725/205552069-19e7e1d3-5222-4494-af76-7be5f4f1e6cd.png)
 
