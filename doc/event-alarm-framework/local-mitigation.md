@@ -132,6 +132,7 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
         "instance-id": "c8156f6c-b220-4cd0-bc0b-b803aee3217d",
         "anomaly-instance-id": "062445d7-87a0-4600-b482-1921053d103d",
         "anomaly-key": "Ethernet0",
+        "anomaly-data": "<JSON string of o/p from preceding actions, here just anomaly>"
         "service-name": "dhcp-relay",
         "action-type": "safety-check",
         "result-code": 0,
@@ -146,6 +147,7 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
         "instance-id": "01acf729-f03e-40cc-8b9e-cfff07b43ab6",
         "anomaly-instance-id": "062445d7-87a0-4600-b482-1921053d103d",
         "anomaly-key": "Ethernet0",
+        "anomaly-data": "<JSON string of from preceding actions, here anomaly & safety-check>"
         "service-name": "dhcp-relay",
         "action-type": "mitigation",
         "result-code": 0,
@@ -159,6 +161,7 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
         "instance-id": "062445d7-87a0-4600-b482-1921053d103d",
         "anomaly-instance-id": "062445d7-87a0-4600-b482-1921053d103d",
         "anomaly-key": "Ethernet0",
+        "anomaly-data": "<JSON string of from preceding actions, here initial-anomaly, safety-check & mitigation>"
         "ifname": "Ethernet0",
         "service-name": "dhcp-relay",
         "action-type": "anomaly",
@@ -192,7 +195,7 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
    - Only one action can be requested at a time.
    - A request will be acted upon by LoM Only once.
    - Result of the run will be published/logged/cached as above with flag indicating manual invoke.
-   - The request is always placed with an max lifetime in seconds, explicitly stated.
+   - The request is always placed with an max lifetime set as seconds since epoch to expire.
    
 ## Actions control
 1. Actions can be disabled via global or action-specific switch
@@ -225,11 +228,18 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
 ## LoM Service/container
 1. A new service is added for LoM (Local Mitigation)
 2. Service is internally architected as plugin based, where each action (detection/safety-check/mitigation) can be added as plugins.
-3.The service is fully self contained for all actions with exceptiopns of mitigations to be run at host level.
-8. The container adds as another service/feature as systemd managed.
-9. The container will use a private dir /usr/share/sonic/LoM as RW. This dir will be mounted only to LoM container, hence exclusive.
-10. The private dir will be used for any runtime update and image upgrade script will carry over for maintianing the updates.
-11. This service is integrated with sonic-buildimage via submodule update.
+3. The service is fully self contained for all actions with exceptions of mitigations to be run at host level.
+4. The service will be mounted with a host dir, exclusive to this feature as RW.
+5. The service will use this for any data it shares with host services like D-Bus and image-upgrade script.
+6. The mitigations that need to run at host context uses host's D-Bus service.
+7. The D-Bus scripts are copied into host path mounted as RW and host-DBus service is configured to load scripts from here.
+8. The service maintains the running config in this dir and used by show command.
+9. Any updated plugun scripts could be copied into this dir and the service will reload upon restart/SIGHUP.
+10. The image-upgrade script will carry over the contents of this dir during image upgrade to carry over the current state.
+11. The container image is created and added as a service/feature managwed by systemd & FEATURE table.
+12. This service is integrated with sonic-buildimage via submodule update.
+13. The YANG schema will be created along with other SONiC YANG modules.
+14. Nightly tests will be added for each action.
 
 ## Redis-DB
 ### CONFIG/STATE-DB
@@ -238,7 +248,7 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
   - The schema denotes configurable parameters explicitly
 - The current running config is written into STATE-DB. This will be the final running config which is built-in config that is tweaked from incremental updates. Hence the final running/in-use config.
 - The current config is also saved into a file in host mounted dir, which will be taken over during image upgrade. This way any updates gets carried over to the new image.
-- The CLI commands will be provided to config/show.
+- The CLI commands will be provided to config/show. The pre-existing gNMI support could be extended to the new DB objects transparently.
 - Explicit action invocation can be requested via CONFIG-DB with an expiry time.
   - A generic object to invoke any action with required inputs specified with time point of expiry
   - This can be used by DRIs/tools to tap on Switch's ability to run a mitigation or safety-check or to report an anomally manually to trigger the chain of actions per configuration.
@@ -246,6 +256,12 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
 [Please refer github repo for final YANG models]
 
 #### ACTIONS-List
+This lists all the actions.
+The CONFIG-DB entry is created only for tweaking.  Any update is absorbed and internally persisted into running config.
+An explicit delete of an update in CONFIG-DB will revert the config back to built-in settings.
+Hene CONFIG-DB may have none or a subset of actions only and carries only the diff/tweaks made.
+The STATE-DB will have the complete list of actions with current config data in use.
+
     container LOM_ACTIONS {
         description "List of actions";
 
@@ -293,6 +309,10 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
 
 
 #### ACTIONS-Bindings
+Each anomaly action is bound to one or more actions as safety-checks & mitigations.
+Each action comes with built-in binding, which can be tweaked via CONFIG-DB.
+The STATE-DB reflects running bindings for all anomaly actions.
+
     container LOM_ACTION_BINDINGS {
         description "List of bindings";
 
@@ -365,14 +385,75 @@ DHCP relay discard detected and mitigation is to restart the DHCP service, if sa
     }   
 
 #### ACTIONS-Cache
-Caches o/p from last N actions 
+Each event published is also cached in STATE-DB wirh a max cap of N
+Each event is cached as JSON string with timestamp.
+This can be used by tools as a backup when events channel's streaming is broken.
 
-< TODO >
-
-#### ACTIONS-Request
+   container LOM_ACTION_CACHE {
+        key "instance-id, timestamp"
+      
+        leaf timestamp {
+            type yang:date-and-time;
+            description "time of the event";
+        }
+        leaf instance-id {
+            type yang:uuid;
+            description "UUID for this instance";
+        }
+        
+        leaf data {
+            type string;
+            description "JSON String of the published data";
+        }
+   }
+   
+#### ACTIONSRequest
 Way to request explicit run of an action or report an anomally manually.
 
-< TODO >
+   container LOM_ACTION_REQUEST {
+         key "instance-id";
+                        
+        leaf instance-id {
+            type yang:uuid;
+            description "UUID for this instance";
+        }       
+        leaf exp-timestamp {
+            type yang:date-and-time;
+            description "time of the event";
+        }
+        
+        leaf action-data {
+            type string;
+            description "Initial data to invoked actions
+               This data along with instance-id will be published as user
+               created anomaly";
+        }
+        
+        leaf binding-name {
+            type string;
+            description "Name of the anomaly action whose binding
+               is executed; In the absence of this go by provided
+               list of bindings";
+        }
+        
+        list bindings {
+            key "sequence"
+
+            leaf sequence {
+                type uint8;
+                description "Order of running. Lower sequence go before higher";
+            }   
+
+            leaf ACTION-NAME {
+                type leafref {
+                    path "../../LOM_ACTIONS/ACTION-NAME";
+                }   
+                description "Name of the action" of the action as
+                    <yang module name>:<container name>";
+            }   
+        }   
+   }
+              
 
 #### counters
 Table name: LOM_COUNTERS
@@ -397,7 +478,7 @@ Table name: LOM_COUNTERS
 
 ## gNMI commands
 1. The existing gNMI command to view events could be used to view all published actions.
-2. The new gNMI commands under development for config update can be transparently used for any CONFIG-DB updates.
+2. The new gNMI commands under development (via different project) for config update can be transparently used for any CONFIG-DB updates.
 3. The current gNMI commands to view STATE-DB gets transparently extended to the STATE-DB additions.
 4. In short this project does not introduce any new gNMI commands.
 
@@ -409,18 +490,21 @@ Table name: LOM_COUNTERS
    
 2. Config update:
    - Possible via gNMI channel being added for any configuration update.
+   - CLI will be provided for new objects.
+   - Running config is separately maintained by the service.
+   - Image upgrade script is tweaked to carry over this running config to new image.
    
 3. Plugins code update:
    - Possible via file copy into the switch
    - New plugin files may be copied to the path mapped to container.
-   - A local monitor will reload the new file.
+   - A service restart/SIGHUP to relevant processes will reload the new file.
    - Image upgrade script will carry over upon image update.
    - Plugin files are versioned and the new image will load the latest, which could be from carried over file or built-in.
    
 4. Service update
    - Build a new container image and push to ACR.
-   - Container images are versioned.
-   - Set the new version as golden version in FEATURE table in CONFIG-DB via CONFIG-update via CLI/gNMI.
+   - Container images are versioned as in SONiC.
+   - Set the new version as golden version in FEATURE table in CONFIG-DB via CLI/gNMI.
    - A built-in anomaly is triggered when golden version != running version
    - The mitigation action bound to this anomaly is triggered which executes script via D-BUS.
    - The mitigation action script via D-Bus does upgrade as follows.
@@ -433,7 +517,11 @@ Table name: LOM_COUNTERS
      7. On failure, tag old image as latest and remove new image followed by service restart
    - NOTE: Systemd is configured with 1 min timeout so as to allow any on going mitigation to complete before exiting for a stop/restart.
 
-
+5. SONiC image update
+   - SONiC image is built with this container image, like all other features.
+   - Any image upgrade will install the built-in image
+   - Based on config, it would self update as needed.
+   
 
 # LoM service Actions:
 Therea are 3 types of actions as below. Each are independent units of actions bound together via pre-declared/run-time-config.
@@ -449,10 +537,10 @@ Therea are 3 types of actions as below. Each are independent units of actions bo
   - Successful detection reports data as per schema.
   - Nightly tests ensure the data integrity in each OS release.
   - The engine publishes it via events channel and passes it to subsequently invoked safety-checks and mitigations as part of shared context.
-  - The schema specifies mitigations to run with order specified.
+  - The config specifies mitigations to run with order specified.
   - A config update can override this.
-  - RFE: An anomaly can be manually reported via DB.
-    -  This is to enable external services/DRI to trigger repair actions for an anomaly explicitly. The DB entry will be created with JSON object per Anomaly's schema.
+  - An anomaly can be manually reported via DB to trigger follow up actions or provide a custom set of actions to run.
+    -  This is to enable external services/DRI to trigger repair actions for an anomaly explicitly. 
   - Publishing
     - Anomaly is published upon detection with data as per schema.
     - An instance of anomaly detection is uniquely identified by a UUID, called instance-id.
@@ -519,3 +607,18 @@ Therea are 3 types of actions as below. Each are independent units of actions bo
    - The o/p attributes could be referred to by others.
 8. The mitigation & safety-checks have result-code and result-str.
 9. The published data per action is per this schema.
+10. Refer git repo for the final definitions.
+
+
+# Events reliability
+  - Events channel from Switch to the final consumer often has multiple hops and which increases the probability of loss.
+  - An event just published once has higher chance of getting lost.
+  - When an anomaly is detected and published, it is followed by heartbeat/safety-check/mitigation publishing.
+  - Each publishing carries its data and data of the preceding actions.
+  - Hence even if the external tool receives any one of the many, it gets the history of all preceding.
+  - When final anomaly-completed is published, it is repeated few times, as N times every 5 seconds.
+  - The completed anomaly event also carries the results from preceding safety-checks & mitigation actions.
+  - Only when events are missed for an extended period, an anomaly gets missed.
+  - Whenever a tool identifies an anomaly and attempt to mitigate, can query the switch cache to assess any actions by LoM.
+  - A tool that attempts to do any switch update is expected to disable all actions/mitigations to pause LoM while it is repairing/updating the switch.
+
